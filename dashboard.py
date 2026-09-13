@@ -11,7 +11,8 @@ from urllib.parse import unquote, urlparse
 import pandas as pd
 import streamlit as st
 
-from config import DB_PATH, GROUP_CHAT_ID, HEARTBEAT_PATH, PRINTER_BACKEND, PRINTER_NAME
+from config import CASSETTE_CAPACITY, DB_PATH, GROUP_CHAT_ID, HEARTBEAT_PATH, PRINTER_BACKEND, PRINTER_NAME
+from db import count_prints_since, get_cassette_reset_at, reset_cassette
 from printers import get_printer
 
 HEARTBEAT_STALE_SECONDS = 90
@@ -150,6 +151,28 @@ with status_col2:
         st.error(f"🔴 {pstat['text']}")
     if pstat.get("queue_len") is not None:
         st.caption(f"Заданий в очереди CUPS: {pstat['queue_len']}")
+
+st.divider()
+
+st.subheader("Расходники")
+reset_at = get_cassette_reset_at()
+used = count_prints_since(reset_at)
+remaining = max(CASSETTE_CAPACITY - used, 0)
+fraction_used = min(used / CASSETTE_CAPACITY, 1.0) if CASSETTE_CAPACITY else 0.0
+
+cassette_col1, cassette_col2 = st.columns([3, 1])
+with cassette_col1:
+    st.progress(fraction_used, text=f"Использовано {used} из {CASSETTE_CAPACITY} (осталось ~{remaining})")
+    if remaining <= 0:
+        st.error("Кассета, вероятно, пуста — пора менять.")
+    elif remaining <= 10:
+        st.warning(f"Осталось мало — примерно {remaining} отпечатков.")
+    reset_label = "с начала времён" if reset_at == "0000-01-01 00:00:00" else reset_at
+    st.caption(f"Текущая кассета считается установленной с: {reset_label}")
+with cassette_col2:
+    if st.button("🔄 Новая кассета"):
+        reset_cassette()
+        st.rerun()
 
 st.divider()
 

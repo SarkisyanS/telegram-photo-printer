@@ -22,3 +22,7 @@ PRINT_MAX_DIMENSION = int(os.environ.get("PRINT_MAX_DIMENSION", "1800"))
 # Файл-heartbeat: бот периодически пишет туда текущее время, чтобы dashboard.py
 # мог определить, что процесс жив (а не просто упал молча).
 HEARTBEAT_PATH = os.environ.get("HEARTBEAT_PATH", "data/bot_heartbeat.txt")
+
+# Сколько отпечатков даёт одна кассета/картридж — принтер сам это не сообщает
+# (см. README), поэтому считаем расход программно. Для Canon KP-108IN — 108.
+CASSETTE_CAPACITY = int(os.environ.get("CASSETTE_CAPACITY", "108"))
